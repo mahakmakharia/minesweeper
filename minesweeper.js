@@ -13,9 +13,8 @@ export let markedTiles = 0,
 export function getGameBoard(boardSize, noOfMines) {
   const board = new Map();
   const mines = getMineTilePositions(boardSize, noOfMines);
-  console.log(mines);
+
   for (let x = 0; x < boardSize; x++) {
-    const row = [];
     for (let y = 0; y < boardSize; y++) {
       const div = document.createElement('div');
       div.dataset.status = TILE_STATUSES.HIDDEN;
@@ -101,8 +100,8 @@ function nearbyTiles(board, tile) {
   let tiles = [];
   for (let i = -1; i <= 1; i++) {
     for (let j = -1; j <= 1; j++) {
-      const temp = board.get(`${tile.x + i},${tile.y + j}`);
-      if (temp) tiles.push(temp);
+      const adj = board.get(`${tile.x + i},${tile.y + j}`);
+      if (adj) tiles.push(adj);
     }
   }
   return tiles;
