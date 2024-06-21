@@ -5,8 +5,13 @@ export const TILE_STATUSES = {
   MARKED: 'marked',
 };
 
+export let markedTiles = 0,
+  tilesWithMineMarked = 0,
+  visibleTiles = 0,
+  minedTiles = 0;
+
 export function getGameBoard(boardSize, noOfMines) {
-  const board = [];
+  const board = new Map();
   const mines = getMineTilePositions(boardSize, noOfMines);
   console.log(mines);
   for (let x = 0; x < boardSize; x++) {
@@ -26,9 +31,8 @@ export function getGameBoard(boardSize, noOfMines) {
           this.element.dataset.status = value;
         },
       };
-      row.push(tile);
+      board.set(`${x},${y}`, tile);
     }
-    board.push(row);
   }
   return board;
 }
@@ -45,6 +49,8 @@ export function markTile(tile) {
     tile.status = TILE_STATUSES.HIDDEN;
   } else {
     tile.status = TILE_STATUSES.MARKED;
+    if (tile.mine) tilesWithMineMarked += 1;
+    markedTiles += 1;
   }
 }
 
@@ -56,9 +62,11 @@ export function revealTile(board, tile) {
   if (tile.mine) {
     tile.element.textContent = '💣';
     tile.status = TILE_STATUSES.MINE;
+    minedTiles += 1;
     return;
   }
 
+  visibleTiles += 1;
   tile.status = TILE_STATUSES.NUMBER;
   const adjacentTiles = nearbyTiles(board, tile);
   const mines = adjacentTiles.filter((t) => t.mine);
@@ -67,27 +75,6 @@ export function revealTile(board, tile) {
   } else {
     tile.element.textContent = mines.length;
   }
-}
-
-export function checkWin(board) {
-  return board.every((row) => {
-    return row.every((tile) => {
-      return (
-        tile.status === TILE_STATUSES.NUMBER ||
-        (tile.mine &&
-          (tile.status === TILE_STATUSES.HIDDEN ||
-            tile.status === TILE_STATUSES.MARKED))
-      );
-    });
-  });
-}
-
-export function checkLose(board) {
-  return board.some((row) => {
-    return row.some((tile) => {
-      return tile.status === TILE_STATUSES.MINE;
-    });
-  });
 }
 
 function getMineTilePositions(boardSize, noOfMines) {
@@ -114,7 +101,7 @@ function nearbyTiles(board, tile) {
   let tiles = [];
   for (let i = -1; i <= 1; i++) {
     for (let j = -1; j <= 1; j++) {
-      const temp = board[tile.x + i]?.[tile.y + j];
+      const temp = board.get(`${tile.x + i},${tile.y + j}`);
       if (temp) tiles.push(temp);
     }
   }

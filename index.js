@@ -1,10 +1,12 @@
 import {
   TILE_STATUSES,
-  checkLose,
-  checkWin,
   getGameBoard,
   markTile,
+  markedTiles,
+  minedTiles,
   revealTile,
+  tilesWithMineMarked,
+  visibleTiles,
 } from './minesweeper.js';
 
 const NO_OF_TILES = 10,
@@ -16,33 +18,29 @@ boardElement.style.setProperty('--size', NO_OF_TILES);
 subtitleElement.textContent = `Mines left: ${NO_OF_MINES}`;
 
 const board = getGameBoard(NO_OF_TILES, NO_OF_MINES);
-board.forEach((row) => {
-  row.forEach((tile) => {
-    tile.element.addEventListener('click', () => {
-      revealTile(board, tile);
-      checkWinGame();
-    });
-    tile.element.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      markTile(tile);
-      listMinesLeft();
-    });
-    boardElement.appendChild(tile.element);
+board.forEach((tile) => {
+  tile.element.addEventListener('click', () => {
+    revealTile(board, tile);
+    checkWinGame();
   });
+  tile.element.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    markTile(tile);
+    listMinesLeft();
+    checkWinGame();
+  });
+  boardElement.appendChild(tile.element);
 });
 
 function listMinesLeft() {
-  const markedTilesCount = board.reduce(
-    (count, row) =>
-      count + row.filter((tile) => tile.status === TILE_STATUSES.MARKED).length,
-    0
-  );
-  subtitleElement.textContent = `Mines left: ${NO_OF_MINES - markedTilesCount}`;
+  subtitleElement.textContent = `Mines left: ${NO_OF_MINES - markedTiles}`;
 }
 
 function checkWinGame() {
-  const win = checkWin(board);
-  const lose = checkLose(board);
+  const win =
+    tilesWithMineMarked === NO_OF_MINES ||
+    visibleTiles + markedTiles === NO_OF_TILES * NO_OF_TILES;
+  const lose = minedTiles > 0;
 
   if (win || lose) {
     boardElement.addEventListener('click', stopProp, { capture: true });
@@ -56,11 +54,9 @@ function checkWinGame() {
 
   if (lose) {
     subtitleElement.textContent = 'You lose';
-    board.forEach((row) => {
-      row.forEach((tile) => {
-        if (tile.status === TILE_STATUSES.MARKED) markTile(tile);
-        if (tile.mine) revealTile(board, tile);
-      });
+    board.forEach((tile) => {
+      if (tile.status === TILE_STATUSES.MARKED) markTile(tile);
+      if (tile.mine) revealTile(board, tile);
     });
   }
 }
